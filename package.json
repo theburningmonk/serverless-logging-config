@@ -1,6 +1,6 @@
 {
   "name": "serverless-logging-config",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lets you configure custom log group, JSON logging, and other recent logging changes announce in Nov 2023.",
   "main": "index.js",
   "scripts": {
