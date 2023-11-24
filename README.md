@@ -39,5 +39,5 @@ See [this page](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/a
 ```yml
 plugins:
   - serverless-iam-roles-per-function
-  - serverless-loggin-config
+  - serverless-logging-config
 ```
