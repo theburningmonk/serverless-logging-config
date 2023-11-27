@@ -1,0 +1,18 @@
+service: default-log-groups-with-json
+
+frameworkVersion: "3"
+
+plugins:
+  - ../../index
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+custom:
+  serverless-logging-config:
+    enableJson: true
+
+functions:
+  hello:
+    handler: handler.hello

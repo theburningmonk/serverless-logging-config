@@ -33,21 +33,15 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
   `)
     }
 
-    if (!settings.logGroupName) {
-      throw new Error(`serverless-logging-config: You need to set the "logGroupName".
-For example:
-
-  custom:
-    serverless-logging-config:
-      enableJson: true # [Optional] set the LogFormat to JSON
-      logGroupName: "my-logs" # [Required] all functions to send logs to the "my-logs" log group
-      applicationLogLevel: DEBUG | ERROR | FATAL | INFO | TRACE | WARN
-      systemLogLevel: DEBUG | INFO | WARN
-      `)
-    }
+    this.logGroupName = settings?.logGroupName
   }
 
   disableFunctionLogs () {
+    const logGroupName = this.serverless.service.custom['serverless-logging-config'].logGroupName
+    if (!logGroupName) {
+      return
+    }
+
     const functions = this.serverless.service.functions
     Object.values(functions).forEach(x => {
       x.disableLogs = true
@@ -84,6 +78,9 @@ For example:
 
   addIamPermissions () {
     const settings = this.serverless.service.custom['serverless-logging-config']
+    if (!settings.logGroupName) {
+      return
+    }
 
     const template = this.serverless.service.provider.compiledCloudFormationTemplate
     const functions = Object

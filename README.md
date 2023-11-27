@@ -27,7 +27,7 @@ service: my-service
 custom:
   serverless-logging-config:
     enableJson: true # [Optional] if enabled, set the LogFormat to JSON
-    logGroupName: my-logs # [Required] all functions will send logs this log group
+    logGroupName: my-logs # [Optional] if set, all functions will send logs this log group
     applicationLogLevel: INFO # [Optional] valid values are DEBUG, ERROR, FATAL, INFO, TRACE and WARN
     systemLogLevel: INFO # [Optional] valid values are DEBUG, INFO and WARN
 ```
