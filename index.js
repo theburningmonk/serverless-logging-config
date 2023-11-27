@@ -32,35 +32,45 @@ And see this page for more info on what these settings mean:
 https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lambda-function-loggingconfig.html
   `)
     }
-
-    this.logGroupName = settings?.logGroupName
   }
 
   disableFunctionLogs () {
-    const logGroupName = this.serverless.service.custom['serverless-logging-config'].logGroupName
-    if (!logGroupName) {
+    const settings = this.serverless.service.custom['serverless-logging-config']
+    if (!settings.logGroupName) {
       return
     }
 
+    const exclude = settings.useDefaultLogGroup || []
     const functions = this.serverless.service.functions
-    Object.values(functions).forEach(x => {
-      x.disableLogs = true
-    })
-    this.log('Disabled auto-generated Lambda log groups')
+    const functionNames = Object.keys(functions)
+    functionNames
+      .filter(x => !exclude.includes(x))
+      .forEach(x => {
+        functions[x].disableLogs = true
+      })
+
+    let logMsg = 'Disabled auto-generated Lambda log groups'
+    if (exclude.length > 0) {
+      logMsg += ` (excluding ${exclude.join(', ')})`
+    }
+    this.log(logMsg)
   }
 
   setLoggingConfig () {
     const settings = this.serverless.service.custom['serverless-logging-config']
+    const exclude = settings.useDefaultLogGroup || []
 
     const template = this.serverless.service.provider.compiledCloudFormationTemplate
     const functions = Object
       .values(template.Resources)
       .filter(x => x.Type === 'AWS::Lambda::Function')
 
-    functions.forEach(x => {
-      x.Properties.LoggingConfig = {
+    for (const func of functions) {
+      const isDisabled = this.isDefaultLogGroup(func, template)
+
+      func.Properties.LoggingConfig = {
         ApplicationLogLevel: settings.applicationLogLevel,
-        LogGroup: settings.logGroupName,
+        LogGroup: !isDisabled ? settings.logGroupName : undefined,
         LogFormat: settings.enableJson === true ? 'JSON' : 'Text',
         SystemLogLevel: settings.systemLogLevel
       }
@@ -68,12 +78,16 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
       // after we disable the default log group, the DependsOn array will be null
       // unfortunately, some plugins like serverless-iam-roles-per-function needs
       // DependsOn to be an array, so we'll set it to an empty array if it's null
-      if (!x.DependsOn) {
-        x.DependsOn = []
+      if (!func.DependsOn) {
+        func.DependsOn = []
       }
-    })
+    }
 
-    this.log('Added LoggingConfig to all the functions.')
+    let logMsg = 'Added LoggingConfig to all the functions'
+    if (exclude.length > 0) {
+      logMsg += ` (excluding ${exclude.join(', ')})`
+    }
+    this.log(logMsg)
   }
 
   addIamPermissions () {
@@ -97,16 +111,18 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
         }
 
         role.Properties.Policies.forEach(x => {
-          x.PolicyDocument.Statement.forEach(stm => {
-            stm.Action = this.arrayify(stm.Action)
-            stm.Resource = this.arrayify(stm.Resource)
+          x.PolicyDocument.Statement
+            .filter(stm => stm.Effect === 'Allow')
+            .forEach(stm => {
+              stm.Action = this.arrayify(stm.Action)
+              stm.Resource = this.arrayify(stm.Resource)
 
-            if (stm.Action.filter(act => act.startsWith('logs:')).length > 0) {
-              stm.Resource.push({
-                'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${settings.logGroupName}:*`
-              })
-            }
-          })
+              if (stm.Action.filter(act => act.startsWith('logs:')).length > 0) {
+                stm.Resource.push({
+                  'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${settings.logGroupName}:*`
+                })
+              }
+            })
         })
       }
 
@@ -133,6 +149,23 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
     } else {
       return [obj]
     }
+  }
+
+  isDefaultLogGroup (x, template) {
+    if (!x.DependsOn) {
+      return false
+    }
+
+    for (const dep of x.DependsOn) {
+      if (dep.endsWith('LogGroup')) {
+        const logGroup = template.Resources[dep]
+        if (logGroup.Type === 'AWS::Logs::LogGroup') {
+          return true
+        }
+      }
+    }
+
+    return false
   }
 }
 

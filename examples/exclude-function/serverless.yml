@@ -1,0 +1,23 @@
+service: exclude-function
+
+frameworkVersion: "3"
+
+plugins:
+  - ../../index
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+custom:
+  serverless-logging-config:
+    logGroupName: exclude-function-demo
+    useDefaultLogGroup:
+      - world
+
+functions:
+  hello:
+    handler: handler.hello
+
+  world:
+    handler: handler.world

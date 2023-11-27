@@ -30,6 +30,9 @@ custom:
     logGroupName: my-logs # [Optional] if set, all functions will send logs this log group
     applicationLogLevel: INFO # [Optional] valid values are DEBUG, ERROR, FATAL, INFO, TRACE and WARN
     systemLogLevel: INFO # [Optional] valid values are DEBUG, INFO and WARN
+    useDefaultLogGroup: # [Optional] these functions would keep logging to their default log group
+      - function1
+      - function2
 ```
 
 See [this page](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lambda-function-loggingconfig.html) for more info on what these settings mean.
