@@ -12,7 +12,7 @@ class ServerlessLoggingConfig {
   }
 
   init () {
-    const settings = this.serverless.service.custom['serverless-logging-config']
+    const settings = this.serverless.service.custom?.['serverless-logging-config']
     if (!settings) {
       throw new Error(`serverless-logging-config: No custom settings found.
 You need to configure this plugin by add a "serverless-logging-config" section under "custom".
