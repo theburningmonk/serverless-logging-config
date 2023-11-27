@@ -1,20 +1,20 @@
 class ServerlessLoggingConfig {
-  constructor(serverless) {
+  constructor (serverless) {
     this.serverless = serverless
     this.log = (msgs) => console.log('serverless-logging-config:', msgs)
 
     this.hooks = {
-      'initialize': () => this.init(this),
+      initialize: () => this.init(this),
       'before:package:initialize': () => this.disableFunctionLogs(this),
       'after:package:compileEvents': () => this.setLoggingConfig(this),
       'before:package:finalize': () => this.addIamPermissions(this)
     }
   }
 
-  init() {
+  init () {
     const settings = this.serverless.service.custom['serverless-logging-config']
     if (!settings) {
-      throw new Error(`serverless-logging-config: No custom settings found. 
+      throw new Error(`serverless-logging-config: No custom settings found.
 You need to configure this plugin by add a "serverless-logging-config" section under "custom".
 For example, like this
 
@@ -36,7 +36,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
     if (!settings.logGroupName) {
       throw new Error(`serverless-logging-config: You need to set the "logGroupName".
 For example:
-    
+
   custom:
     serverless-logging-config:
       enableJson: true # [Optional] set the LogFormat to JSON
@@ -47,21 +47,21 @@ For example:
     }
   }
 
-  disableFunctionLogs() {
+  disableFunctionLogs () {
     const functions = this.serverless.service.functions
-    Object.values(functions).forEach(x => x.disableLogs = true)
+    Object.values(functions).forEach(x => {
+      x.disableLogs = true
+    })
     this.log('Disabled auto-generated Lambda log groups')
   }
 
-  setLoggingConfig() {
+  setLoggingConfig () {
     const settings = this.serverless.service.custom['serverless-logging-config']
 
     const template = this.serverless.service.provider.compiledCloudFormationTemplate
     const functions = Object
       .values(template.Resources)
       .filter(x => x.Type === 'AWS::Lambda::Function')
-
-    const updatedRoles = []
 
     functions.forEach(x => {
       x.Properties.LoggingConfig = {
@@ -76,13 +76,13 @@ For example:
       // DependsOn to be an array, so we'll set it to an empty array if it's null
       if (!x.DependsOn) {
         x.DependsOn = []
-      }      
+      }
     })
 
     this.log('Added LoggingConfig to all the functions.')
   }
 
-  addIamPermissions() {
+  addIamPermissions () {
     const settings = this.serverless.service.custom['serverless-logging-config']
 
     const template = this.serverless.service.provider.compiledCloudFormationTemplate
@@ -91,19 +91,19 @@ For example:
       .filter(x => x.Type === 'AWS::Lambda::Function')
 
     const updatedRoles = []
-    const updateRole = roleLogicalId => {      
+    const updateRole = roleLogicalId => {
       if (!updatedRoles.includes(roleLogicalId)) {
         const role = template.Resources[roleLogicalId]
         if (!role) {
           this.log('Role not found:', roleLogicalId)
           return
         }
-        
+
         role.Properties.Policies.forEach(x => {
           x.PolicyDocument.Statement.forEach(stm => {
             stm.Action = this.arrayify(stm.Action)
             stm.Resource = this.arrayify(stm.Resource)
-  
+
             if (stm.Action.filter(act => act.startsWith('logs:')).length > 0) {
               stm.Resource.push({
                 'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${settings.logGroupName}:*`
@@ -128,7 +128,7 @@ For example:
     this.log('Added permissions to all the functions.')
   }
 
-  arrayify(obj) {
+  arrayify (obj) {
     if (Array.isArray(obj)) {
       return obj
     } else if (typeof obj === 'string') {
@@ -138,5 +138,5 @@ For example:
     }
   }
 }
- 
+
 module.exports = ServerlessLoggingConfig
