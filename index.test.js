@@ -80,7 +80,11 @@ describe('Given a logGroupName is not set', () => {
                     PolicyDocument: {
                       Statement: [{
                         Action: ['logs:CreateLogGroup', 'logs:CreateLogStream'],
-                        Resource: ['arn:aws:logs:region:account-id:*']
+                        Resource: [
+                          {
+                            'Fn:: Sub': 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/checkout-dev*:*:*'
+                          }
+                        ]
                       }]
                     }
                   }]
@@ -130,7 +134,11 @@ describe('Given a logGroupName is not set', () => {
           PolicyDocument: {
             Statement: [{
               Action: ['logs:CreateLogGroup', 'logs:CreateLogStream'],
-              Resource: ['arn:aws:logs:region:account-id:*']
+              Resource: [
+                {
+                  'Fn:: Sub': 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/checkout-dev*:*:*'
+                }
+              ]
             }]
           }
         }]
@@ -282,7 +290,11 @@ describe('Given a logGroupName is set and a function is excluded', () => {
                       Statement: [{
                         Effect: 'Allow',
                         Action: ['logs:CreateLogGroup', 'logs:CreateLogStream'],
-                        Resource: ['arn:aws:logs:region:account-id:*']
+                        Resource: [
+                          {
+                            'Fn:: Sub': 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/checkout-dev*:*:*'
+                          }
+                        ]
                       }]
                     }
                   }]
