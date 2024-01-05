@@ -1,3 +1,5 @@
+const _ = require('lodash')
+
 class ServerlessLoggingConfig {
   constructor (serverless) {
     this.serverless = serverless
@@ -101,34 +103,31 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
       .values(template.Resources)
       .filter(x => x.Type === 'AWS::Lambda::Function')
 
-    const updatedRoles = []
     const updateRole = roleLogicalId => {
-      if (!updatedRoles.includes(roleLogicalId)) {
-        const role = template.Resources[roleLogicalId]
-        if (!role) {
-          this.log('Role not found:', roleLogicalId)
-          return
-        }
-
-        role.Properties.Policies.forEach(x => {
-          x.PolicyDocument.Statement
-            .filter(stm => stm.Effect === 'Allow')
-            .forEach(stm => {
-              stm.Action = this.arrayify(stm.Action)
-              stm.Resource = this.arrayify(stm.Resource)
-
-              if (stm.Resource.filter(res => res.startsWith('*')).length === 0) {
-                if (stm.Action.filter(act => act.startsWith('logs:')).length > 0) {
-                  stm.Resource.push({
-                    'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${settings.logGroupName}:*`
-                  })
-                }
-              }
-            })
-        })
+      const role = template.Resources[roleLogicalId]
+      if (!role) {
+        this.log('Role not found:', roleLogicalId)
+        return
       }
 
-      updatedRoles.push(roleLogicalId)
+      const resource = {
+        'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${settings.logGroupName}:*`
+      }
+
+      role.Properties.Policies.forEach(x => {
+        x.PolicyDocument.Statement
+          .filter(stm => stm.Effect === 'Allow')
+          .forEach(stm => {
+            stm.Action = this.arrayify(stm.Action)
+            stm.Resource = this.arrayify(stm.Resource)
+
+            if (stm.Action.filter(act => act.startsWith('logs:')).length > 0) {
+              if (!stm.Resource.find(r => _.isEqual(r, resource))) {
+                stm.Resource.push(resource)
+              }
+            }
+          })
+      })
     }
 
     // update the default role

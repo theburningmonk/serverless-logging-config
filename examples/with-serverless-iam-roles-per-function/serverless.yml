@@ -1,0 +1,50 @@
+service: with-serverless-iam
+
+frameworkVersion: "3"
+
+plugins:
+  - serverless-iam-roles-per-function
+  - ../../index
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogStream
+            - logs:DescribeLogGroups
+            - logs:DescribeLogStreams
+            - logs:PutLogEvents
+          Resource: "*"
+
+custom:
+  serverless-logging-config:
+    logGroupName: with-serverless-iam-roles
+
+  serverless-iam-roles-per-function:
+    defaultInherit: true
+
+functions:
+  hello:
+    handler: handler.hello
+    iamRoleStatements:
+      - Effect: Allow
+        Action: logs:*
+        Resource: "*"
+
+  world:
+    handler: handler.hello
+    iamRoleStatements:
+      - Effect: Allow
+        Action: logs:CreateLogGroup
+        Resource: "*"
+
+  foo:
+    handler: handler.hello
+
+  bar:
+    handler: handler.hello

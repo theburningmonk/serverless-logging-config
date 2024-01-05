@@ -231,6 +231,10 @@ describe('Given a logGroupName is set', () => {
       // eslint-disable-next-line no-template-curly-in-string
       'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${logGroupName}:*`
     })
+
+    const insertedPermissions = role.Properties.Policies[0].PolicyDocument.Statement[0].Resource
+      .filter(x => x['Fn::Sub'] === `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${logGroupName}:*`)
+    expect(insertedPermissions).toHaveLength(1)
   })
 })
 
@@ -339,106 +343,5 @@ describe('Given a logGroupName is set and a function is excluded', () => {
       // eslint-disable-next-line no-template-curly-in-string
       'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${logGroupName}:*`
     })
-  })
-})
-
-describe('Given a logGroupName is set and resource is *', () => {
-  let serverlessMock
-  let plugin
-  const logGroupName = 'my-logs'
-
-  beforeEach(() => {
-    serverlessMock = {
-      service: {
-        custom: {
-          'serverless-logging-config': {
-            logGroupName
-          }
-        },
-        functions: {
-          hello: {
-            handler: 'hello.handler'
-          },
-          world: {
-            handler: 'world.handler'
-          }
-        },
-        provider: {
-          compiledCloudFormationTemplate: {
-            Resources: {
-              HelloLambdaFunction: {
-                Type: 'AWS::Lambda::Function',
-                Properties: {
-                  Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution'] }
-                }
-              },
-              WorldLambdaFunction: {
-                Type: 'AWS::Lambda::Function',
-                Properties: {
-                  Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution'] }
-                }
-              },
-              IamRoleLambdaExecution: {
-                Type: 'AWS::IAM::Role',
-                Properties: {
-                  Policies: [{
-                    PolicyDocument: {
-                      Statement: [{
-                        Effect: 'Allow',
-                        Action: ['logs:CreateLogGroup', 'logs:CreateLogStream'],
-                        Resource: ['*']
-                      }]
-                    }
-                  }]
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    plugin = new ServerlessLoggingConfig(serverlessMock)
-  })
-
-  test('init should load settings correctly', () => {
-    expect(() => plugin.init()).not.toThrow()
-  })
-
-  test('disableFunctionLogs should disable logs for all functions', () => {
-    plugin.disableFunctionLogs()
-    Object.values(serverlessMock.service.functions)
-      .forEach(func => {
-        expect(func.disableLogs).toBe(true)
-      })
-  })
-
-  test('setLoggingConfig should set a LoggingConfig for all functions', () => {
-    plugin.setLoggingConfig()
-    Object.values(serverlessMock.service.provider.compiledCloudFormationTemplate.Resources)
-      .filter(x => x.Type === 'AWS::Lambda::Function')
-      .forEach(resource => {
-        expect(resource.Properties.LoggingConfig).toEqual({
-          LogGroup: logGroupName,
-          LogFormat: 'Text'
-        })
-
-        expect(resource.DependsOn).toEqual([])
-      })
-  })
-
-  test('addIamPermissions should leave * as is', () => {
-    plugin.addIamPermissions()
-    const role = serverlessMock.service.provider.compiledCloudFormationTemplate.Resources.IamRoleLambdaExecution
-    expect(role.Properties.Policies[0].PolicyDocument.Statement[0].Resource).toContainEqual('*')
-  })
-
-  test('addIamPermissions should not permissions to the shared IAM role', () => {
-    plugin.addIamPermissions()
-    const role = serverlessMock.service.provider.compiledCloudFormationTemplate.Resources.IamRoleLambdaExecution
-    expect(role.Properties.Policies[0].PolicyDocument.Statement[0].Resource).toContainEqual(expect.not.objectContaining({
-      // eslint-disable-next-line no-template-curly-in-string
-      'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${logGroupName}:*`
-    }))
   })
 })
