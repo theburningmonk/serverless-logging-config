@@ -181,7 +181,7 @@ describe('Given a logGroupName is set', () => {
                   Policies: [{
                     PolicyDocument: {
                       Statement: [{
-                        Effect: "Allow",
+                        Effect: 'Allow',
                         Action: ['logs:CreateLogGroup', 'logs:CreateLogStream'],
                         Resource: ['arn:aws:logs:region:account-id:*']
                       }]
@@ -280,7 +280,7 @@ describe('Given a logGroupName is set and a function is excluded', () => {
                   Policies: [{
                     PolicyDocument: {
                       Statement: [{
-                        Effect: "Allow",
+                        Effect: 'Allow',
                         Action: ['logs:CreateLogGroup', 'logs:CreateLogStream'],
                         Resource: ['arn:aws:logs:region:account-id:*']
                       }]
@@ -384,7 +384,7 @@ describe('Given a logGroupName is set and resource is *', () => {
                   Policies: [{
                     PolicyDocument: {
                       Statement: [{
-                        Effect: "Allow",
+                        Effect: 'Allow',
                         Action: ['logs:CreateLogGroup', 'logs:CreateLogStream'],
                         Resource: ['*']
                       }]

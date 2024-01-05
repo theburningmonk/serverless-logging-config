@@ -1,5 +1,5 @@
 class ServerlessLoggingConfig {
-  constructor(serverless) {
+  constructor (serverless) {
     this.serverless = serverless
     this.log = (msgs) => console.log('serverless-logging-config:', msgs)
 
@@ -11,7 +11,7 @@ class ServerlessLoggingConfig {
     }
   }
 
-  init() {
+  init () {
     const settings = this.serverless.service.custom?.['serverless-logging-config']
     if (!settings) {
       throw new Error(`serverless-logging-config: No custom settings found.
@@ -34,7 +34,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
     }
   }
 
-  disableFunctionLogs() {
+  disableFunctionLogs () {
     const settings = this.serverless.service.custom['serverless-logging-config']
     if (!settings.logGroupName) {
       return
@@ -56,7 +56,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
     this.log(logMsg)
   }
 
-  setLoggingConfig() {
+  setLoggingConfig () {
     const settings = this.serverless.service.custom['serverless-logging-config']
     const exclude = settings.useDefaultLogGroup || []
 
@@ -90,7 +90,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
     this.log(logMsg)
   }
 
-  addIamPermissions() {
+  addIamPermissions () {
     const settings = this.serverless.service.custom['serverless-logging-config']
     if (!settings.logGroupName) {
       return
@@ -143,7 +143,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
     this.log('Added permissions to all the functions.')
   }
 
-  arrayify(obj) {
+  arrayify (obj) {
     if (Array.isArray(obj)) {
       return obj
     } else if (typeof obj === 'string') {
@@ -153,7 +153,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
     }
   }
 
-  isDefaultLogGroup(x, template) {
+  isDefaultLogGroup (x, template) {
     if (!x.DependsOn) {
       return false
     }
