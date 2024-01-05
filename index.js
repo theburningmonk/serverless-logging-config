@@ -117,10 +117,12 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-la
               stm.Action = this.arrayify(stm.Action)
               stm.Resource = this.arrayify(stm.Resource)
 
-              if (stm.Action.filter(act => act.startsWith('logs:')).length > 0) {
-                stm.Resource.push({
-                  'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${settings.logGroupName}:*`
-                })
+              if (stm.Resource.filter(res => res.startsWith('*')).length === 0) {
+                if (stm.Action.filter(act => act.startsWith('logs:')).length > 0) {
+                  stm.Resource.push({
+                    'Fn::Sub': `arn:\${AWS::Partition}:logs:\${AWS::Region}:\${AWS::AccountId}:log-group:${settings.logGroupName}:*`
+                  })
+                }
               }
             })
         })
